@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Storm Chase — Great Plains</title>
+    <script type="module" crossorigin src="/assets/index-UTUmGh_x.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Q3QavqpW.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+      <div id="rain-overlay" aria-hidden="true"></div>
+      <div id="cabin-vignette" class="hidden" aria-hidden="true"></div>
+      <div id="photo-flash" class="hidden" aria-hidden="true"></div>
+
+      <div id="title-screen">
+        <div
+          class="title-art"
+          role="img"
+          aria-label="Storm Chase — tornado over a chase road at sunset"
+        ></div>
+        <div class="title-ui">
+          <p id="title-update" class="update-badge title-update-float">Update 1.3.4</p>
+          <p id="title-update-summary" class="sr-only">
+            Instant tornado · dense skyline cities · wall cloud · NEXRAD rain
+          </p>
+          <div class="title-actions">
+            <button type="button" id="btn-enter" class="title-art-btn" aria-label="Start Game">
+              Start Game
+            </button>
+            <button type="button" id="btn-store" class="title-art-btn" aria-label="Store">
+              Store
+            </button>
+            <button type="button" id="btn-credits" class="title-art-btn" aria-label="Credits">
+              Credits
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="store-screen" class="hidden">
+        <div class="menu-shell store-shell">
+          <header class="menu-head">
+            <div>
+              <p class="menu-kicker">OUTFITTERS</p>
+              <h2>STORE</h2>
+            </div>
+            <p id="store-balance" class="wallet-balance" aria-live="polite">$0</p>
+          </header>
+          <p class="car-shop-note">
+            Earn chase pay from runs, then buy rides. Drop a new STL at
+            <code>models/custom-car.stl</code> for Workshop Build.
+          </p>
+          <div class="card-grid card-grid-car" id="store-car-shop"></div>
+          <p id="store-car-status" class="car-shop-status" aria-live="polite"></p>
+          <div class="menu-footer">
+            <button type="button" id="btn-store-back" class="menu-btn primary">Back</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="credits-screen" class="hidden">
+        <div class="menu-shell credits-shell">
+          <header class="menu-head">
+            <div>
+              <p class="menu-kicker">GREAT PLAINS</p>
+              <h2>CREDITS</h2>
+            </div>
+          </header>
+          <ul class="credits-list">
+            <li><b>Storm Chase</b> — Great Plains chase sim</li>
+            <li><b>Design &amp; code</b> — kadenschaos / Cursor agent build</li>
+            <li><b>Engine</b> — Three.js · Vite · TypeScript</li>
+            <li><b>Inspiration</b> — real Plains chase culture &amp; OUTBRK energy</li>
+            <li><b>Title art</b> — Storm Chase cinematic key</li>
+          </ul>
+          <div class="menu-footer">
+            <button type="button" id="btn-credits-back" class="menu-btn primary">Back</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="main-menu" class="hidden">
+        <div class="menu-shell">
+          <header class="menu-head">
+            <div>
+              <p class="menu-kicker">SETUP</p>
+              <h2>NEW RUN</h2>
+            </div>
+            <p id="menu-update" class="update-badge menu-update">Update 1.3.4</p>
+          </header>
+
+          <section class="menu-section">
+            <h3>Mode</h3>
+            <div class="card-grid" id="mode-cards">
+              <button type="button" class="select-card active" data-group="mode" data-mode="chase">
+                <span class="card-icon">CH</span>
+                <span class="card-title">Chase</span>
+                <span class="card-desc">Drive · intercept · document</span>
+              </button>
+              <button type="button" class="select-card" data-group="mode" data-mode="tornado">
+                <span class="card-icon">TOR</span>
+                <span class="card-title">Become Tornado</span>
+                <span class="card-desc">Form · steer the vortex</span>
+              </button>
+              <button type="button" class="select-card" data-group="mode" data-mode="survive" id="card-survive">
+                <span class="card-icon">EF5</span>
+                <span class="card-title">Survive EF5</span>
+                <span class="card-desc">Solo only · 10 min hunt</span>
+              </button>
+              <button type="button" class="select-card" data-group="mode" data-mode="cows" id="card-cows">
+                <span class="card-icon">MOO</span>
+                <span class="card-title">Cow Takeover</span>
+                <span class="card-desc">Cownado · 200,000 cows</span>
+              </button>
+            </div>
+            <select id="opt-mode" class="sr-only" tabindex="-1" aria-hidden="true">
+              <option value="chase" selected>Chase</option>
+              <option value="tornado">Tornado</option>
+              <option value="survive">Survive</option>
+              <option value="cows">Cows</option>
+            </select>
+          </section>
+
+          <section class="menu-section" id="car-shop-section">
+            <div class="garage-head">
+              <h3>Garage</h3>
+              <p id="garage-balance" class="wallet-balance compact" aria-live="polite">$0</p>
+            </div>
+            <p class="car-shop-note">Owned rides only — unlock more in the Store with chase pay.</p>
+            <div class="card-grid card-grid-car" id="car-shop"></div>
+            <p id="car-shop-status" class="car-shop-status" aria-live="polite"></p>
+          </section>
+
+          <section class="menu-section">
+            <h3>Biome</h3>
+            <div class="card-grid card-grid-3">
+              <button type="button" class="select-card active" data-group="biome" data-biome="prairie">
+                <span class="card-title">Prairie</span>
+                <span class="card-desc">Open plains</span>
+              </button>
+              <button type="button" class="select-card" data-group="biome" data-biome="farmland">
+                <span class="card-title">Farmland</span>
+                <span class="card-desc">Barns &amp; herds</span>
+              </button>
+              <button type="button" class="select-card" data-group="biome" data-biome="scrub">
+                <span class="card-title">Scrub Hills</span>
+                <span class="card-desc">Rougher ground</span>
+              </button>
+            </div>
+            <select id="opt-biome" class="sr-only" tabindex="-1" aria-hidden="true">
+              <option value="prairie" selected>Prairie</option>
+              <option value="farmland">Farmland</option>
+              <option value="scrub">Scrub</option>
+            </select>
+          </section>
+
+          <section class="menu-section">
+            <h3>Time of day</h3>
+            <div class="card-grid card-grid-3">
+              <button type="button" class="select-card" data-group="tod" data-tod="dawn">
+                <span class="card-title">Dawn</span>
+                <span class="card-desc">Cool light</span>
+              </button>
+              <button type="button" class="select-card active" data-group="tod" data-tod="day">
+                <span class="card-title">Afternoon</span>
+                <span class="card-desc">Full sun</span>
+              </button>
+              <button type="button" class="select-card" data-group="tod" data-tod="dusk">
+                <span class="card-title">Dusk</span>
+                <span class="card-desc">Golden hour</span>
+              </button>
+            </div>
+            <select id="opt-tod" class="sr-only" tabindex="-1" aria-hidden="true">
+              <option value="dawn">Dawn</option>
+              <option value="day" selected>Afternoon</option>
+              <option value="dusk">Dusk</option>
+            </select>
+          </section>
+
+          <section class="menu-section hidden" id="opt-tornado-wrap">
+            <h3>Tornado type</h3>
+            <div class="card-grid card-grid-wrap">
+              <button type="button" class="select-card active" data-group="tornado" data-tornado="random"><span class="card-title">Random</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="cone"><span class="card-title">Cone</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="wedge"><span class="card-title">Wedge</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="violent"><span class="card-title">Violent</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="catastrophic"><span class="card-title">Catastrophic</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="multivortex"><span class="card-title">Multi-vortex</span></button>
+              <button type="button" class="select-card" data-group="tornado" data-tornado="rainwrapped"><span class="card-title">Rain-wrapped</span></button>
+            </div>
+            <select id="opt-tornado" class="sr-only" tabindex="-1" aria-hidden="true">
+              <option value="random" selected>Random</option>
+              <option value="cone">Cone</option>
+              <option value="wedge">Wedge</option>
+              <option value="violent">Violent</option>
+              <option value="catastrophic">Catastrophic</option>
+              <option value="multivortex">Multi-vortex</option>
+              <option value="rainwrapped">Rain-wrapped</option>
+            </select>
+          </section>
+
+          <label class="check fast-check"><input type="checkbox" id="opt-fast" /> Fast form (shorter lead-up)</label>
+
+          <section class="mp-panel">
+            <div class="mp-head">
+              <h3>Multiplayer</h3>
+              <p id="mp-status" class="mp-status">Solo</p>
+            </div>
+            <label class="field-label">Callsign
+              <input type="text" id="opt-mp-name" maxlength="16" placeholder="Chaser" autocomplete="off" />
+            </label>
+            <div class="mp-actions">
+              <button type="button" id="btn-mp-find" class="menu-btn primary">Find Lobby</button>
+              <button type="button" id="btn-mp-create" class="menu-btn">Create Room</button>
+            </div>
+            <div class="mp-row">
+              <input type="text" id="opt-mp-code" maxlength="6" placeholder="CODE" autocomplete="off" spellcheck="false" />
+              <button type="button" id="btn-mp-join" class="menu-btn">Join Code</button>
+              <button type="button" id="btn-mp-leave" class="menu-btn mp-leave hidden">Leave</button>
+            </div>
+            <p class="mp-note">Survive EF5 is solo-only. After Start, everyone picks Chaser or Tornado.</p>
+          </section>
+
+          <div class="menu-footer">
+            <button type="button" id="btn-start" class="menu-btn primary">Start</button>
+            <button type="button" id="btn-howto" class="menu-btn">How to Play</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="lobby-screen" class="hidden">
+        <div class="menu-shell lobby-shell">
+          <header class="menu-head">
+            <div>
+              <p class="menu-kicker">ROOM LOBBY</p>
+              <h2 id="lobby-code-label">ROOM ——</h2>
+            </div>
+            <p id="lobby-status" class="mp-status">Pick your role</p>
+          </header>
+          <p class="lobby-blurb">Multiple chasers and tornadoes allowed. Survive EF5 is locked in multiplayer.</p>
+          <ul id="lobby-players" class="lobby-players"></ul>
+          <div class="role-pick">
+            <button type="button" class="select-card role-card active" id="role-chaser" data-role="chaser">
+              <span class="card-icon">CH</span>
+              <span class="card-title">Chaser</span>
+              <span class="card-desc">Drive · photo · report</span>
+            </button>
+            <button type="button" class="select-card role-card" id="role-tornado" data-role="tornado">
+              <span class="card-icon">TOR</span>
+              <span class="card-title">Tornado</span>
+              <span class="card-desc">Steer your own vortex</span>
+            </button>
+          </div>
+          <div class="menu-footer">
+            <button type="button" id="btn-lobby-launch" class="menu-btn primary">Launch Chase</button>
+            <button type="button" id="btn-lobby-back" class="menu-btn">Back to Setup</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="howto" class="hidden">
+        <div class="menu-shell">
+          <h2>HOW TO PLAY</h2>
+          <ul class="howto-list">
+            <li><b>Chase:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or left stick · exit / photo / report / probe</li>
+            <li><b>On foot:</b> <kbd>P</kbd> photo · <kbd>T</kbd> report · <kbd>B</kbd> plant probe · walk near probes to sample</li>
+            <li><b>Controller:</b> left stick drive · right stick look · A boost · B exit · X TIV · Y flip · D-pad left probe · Start pause</li>
+            <li><b>Mobile:</b> dual sticks + PIC / RPT / PRB / TIV / FLIP / MAP / BOOST</li>
+            <li><b>Become Tornado:</b> start on the ground immediately — no wait</li>
+            <li><b>Survive EF5:</b> solo only — keep moving for 10 minutes</li>
+            <li><b>Multiplayer:</b> Find Lobby or code → pick Chaser or Tornado → host launches</li>
+            <li>Chase scenarios last ~30–45 minutes unless Fast form is on</li>
+          </ul>
+          <button type="button" id="btn-howto-back" class="menu-btn primary">Back</button>
+        </div>
+      </div>
+
+      <div id="pause-menu" class="hidden">
+        <div class="menu-shell pause-shell">
+          <p class="menu-kicker">PAUSED</p>
+          <h2>Storm on hold</h2>
+          <p class="pause-copy">Resume the chase, or quit back to setup.</p>
+          <div class="menu-footer column">
+            <button type="button" id="btn-resume" class="menu-btn primary">Resume</button>
+            <button type="button" id="btn-quit-menu" class="menu-btn">Quit to Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="hud" class="hidden">
+        <div id="top-left">
+          <div id="brand">STORM CHASE</div>
+          <div id="hud-update" class="update-badge hud-update">Update 1.3.4</div>
+          <div id="mp-hud" class="hidden">ROOM —</div>
+          <div id="phase"><span id="phase-label">CU FIELD</span> · <span id="ef-label">—</span> · <span id="tor-variant">—</span></div>
+          <div id="warning" class="hidden"></div>
+          <div id="briefing">Moisture return ongoing.</div>
+          <div id="intercept-tip">Head north on the main highway.</div>
+          <div id="radio-line">KTLX… towers going up northwest of the highway.</div>
+          <div id="toast" class="hidden"></div>
+        </div>
+        <div id="status">
+          <div><span class="label">Speed</span> <span id="speed">0</span> mph · <span id="surface">ROAD</span></div>
+          <div><span class="label">Mode</span> <span id="cam-mode">Third Person</span></div>
+          <div><span class="label">Cell</span> <span id="cell-dist">—</span></div>
+          <div><span class="label">Bearing</span> <span id="bearing">—</span></div>
+          <div><span class="label">Score</span> <span id="chase-score">0</span> · <span id="chase-rank">SPOTTER</span></div>
+          <div><span class="label" id="shots-label">Shots</span> <span id="photos">0</span> · <span class="label" id="rpts-label">Rpts</span> <span id="reports">0</span> · <span class="label">Probes</span> <span id="probes-count">0</span></div>
+          <div><span class="label">Dmg</span> <span id="damage">0</span>%</div>
+          <div><span class="label">Clock</span> <span id="chase-clock">0:00</span></div>
+        </div>
+        <div id="radar-wrap"></div>
+        <div id="hint">
+          <kbd>R</kbd> TIV · <kbd>G</kbd> flip · <kbd>F</kbd> exit · <kbd>B</kbd> probe · <kbd>M</kbd> map ·
+          <kbd>Esc</kbd>
+        </div>
+        <div id="hint-tornado" class="hidden">
+          On the ground now · stick / WASD steer · surge ·
+          <kbd>Esc</kbd>
+        </div>
+      </div>
+
+      <div id="chase-summary" class="hidden">
+        <div id="summary-card">
+          <h2>CHASE COMPLETE</h2>
+          <div id="summary-body"></div>
+        </div>
+      </div>
+      <div id="loading" class="hidden">Loading chase vehicle…</div>
+    </div>
+  </body>
+</html>
